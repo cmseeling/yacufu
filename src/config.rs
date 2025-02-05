@@ -11,7 +11,7 @@ use ratatui::style::{Color, Modifier, Style};
 use serde::{de::Deserializer, Deserialize};
 use tracing::error;
 
-use crate::{action::Action, app::Mode};
+use crate::{ui::action::Action, ui::app::Mode};
 
 const CONFIG: &str = include_str!("../.config/config.json5");
 
@@ -505,7 +505,7 @@ mod tests {
         let c = Config::new()?;
         assert_eq!(
             c.keybindings
-                .get(&Mode::Home)
+                .get(&Mode::System)
                 .unwrap()
                 .get(&parse_key_sequence("<q>").unwrap_or_default())
                 .unwrap(),

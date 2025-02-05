@@ -1,6 +1,72 @@
 {
   "keybindings": {
-    "Home": {
+    "System": {
+      "<q>": "Quit", // Quit the application
+      "<Ctrl-d>": "Quit", // Another way to quit
+      "<Ctrl-c>": "Quit", // Yet another way to quit
+      "<Ctrl-z>": "Suspend", // Suspend the application
+      "<h>": {
+        "ListAction": "SelectNone"
+      },
+      "<left>": {
+        "ListAction": "SelectNone"
+      },
+      "<j>": {
+        "ListAction": "SelectNext"
+      },
+      "<down>": {
+        "ListAction": "SelectNext"
+      },
+      "<k>": {
+        "ListAction": "SelectPrev"
+      },
+      "<up>": {
+        "ListAction": "SelectPrev"
+      },
+      "<l>": {
+        "ListAction": "MarkSelection"
+      },
+      "<right>": {
+        "ListAction": "MarkSelection"
+      },
+      "<enter>": {
+        "ListAction": "MarkSelection"
+      }
+    },
+    "PackageSources": {
+      "<q>": "Quit", // Quit the application
+      "<Ctrl-d>": "Quit", // Another way to quit
+      "<Ctrl-c>": "Quit", // Yet another way to quit
+      "<Ctrl-z>": "Suspend", // Suspend the application
+      "<h>": {
+        "ListAction": "SelectNone"
+      },
+      "<left>": {
+        "ListAction": "SelectNone"
+      },
+      "<j>": {
+        "ListAction": "SelectNext"
+      },
+      "<down>": {
+        "ListAction": "SelectNext"
+      },
+      "<k>": {
+        "ListAction": "SelectPrev"
+      },
+      "<up>": {
+        "ListAction": "SelectPrev"
+      },
+      "<l>": {
+        "ListAction": "MarkSelection"
+      },
+      "<right>": {
+        "ListAction": "MarkSelection"
+      },
+      "<enter>": {
+        "ListAction": "MarkSelection"
+      }
+    },
+    "InstalledPackages": {
       "<q>": "Quit", // Quit the application
       "<Ctrl-d>": "Quit", // Another way to quit
       "<Ctrl-c>": "Quit", // Yet another way to quit

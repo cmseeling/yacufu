@@ -11,7 +11,7 @@ use ratatui::{
 
 use super::Component;
 
-use crate::action::Action;
+use crate::ui::action::Action;
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct FpsCounter {

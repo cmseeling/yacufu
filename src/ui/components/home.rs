@@ -5,7 +5,7 @@ use ratatui::{prelude::*, widgets::*};
 use tokio::sync::mpsc::UnboundedSender;
 
 use super::Component;
-use crate::{action::Action, config::Config};
+use crate::{config::Config, ui::action::Action};
 
 #[derive(Default)]
 pub struct Home {

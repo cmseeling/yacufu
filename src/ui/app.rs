@@ -11,10 +11,13 @@ use tokio::sync::mpsc;
 use tracing::{debug, info};
 
 use crate::{
-    action::Action,
-    components::{fps::FpsCounter, home::Home, main_menu::MainMenu, Component},
     config::Config,
-    tui::{Event, Tui},
+    ui::action::Action,
+    ui::components::{
+        fps::FpsCounter, home::Home, main_menu::MainMenu, package_sources::PackageSources,
+        Component,
+    },
+    ui::tui::{Event, Tui},
 };
 
 pub struct App {
@@ -33,7 +36,9 @@ pub struct App {
 #[derive(Default, Debug, Copy, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum Mode {
     #[default]
-    Home,
+    System,
+    PackageSources,
+    InstalledPackages,
 }
 
 impl App {
@@ -44,13 +49,14 @@ impl App {
             frame_rate,
             components: vec![
                 Box::new(MainMenu::new()),
-                Box::new(Home::new()),
-                Box::new(FpsCounter::new()),
+                // Box::new(Home::new()),
+                // Box::new(FpsCounter::new()),
+                Box::new(PackageSources::new()),
             ],
             should_quit: false,
             should_suspend: false,
             config: Config::new()?,
-            mode: Mode::Home,
+            mode: Mode::System,
             last_tick_key_events: Vec::new(),
             action_tx,
             action_rx,
@@ -175,18 +181,14 @@ impl App {
         tui.draw(|frame| {
             let [main, help] =
                 Layout::vertical([Constraint::Min(0), Constraint::Length(1)]).areas(frame.area());
-            let [menu, workspace] =
+            let [menu, page] =
                 Layout::horizontal([Constraint::Percentage(20), Constraint::Percentage(80)])
                     .areas(main);
-            let [tab, page] =
-                Layout::vertical([Constraint::Length(4), Constraint::Min(0)]).areas(workspace);
 
             let layout_areas = HashMap::from([
                 ("main", main),
                 ("help", help),
                 ("menu", menu),
-                ("workspace", workspace),
-                ("tab", tab),
                 ("page", page),
             ]);
 

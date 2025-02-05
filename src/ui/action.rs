@@ -1,6 +1,8 @@
 use serde::{Deserialize, Serialize};
 use strum::Display;
 
+use super::app::Mode;
+
 #[derive(Debug, Clone, PartialEq, Eq, Display, Serialize, Deserialize)]
 pub enum ListAction {
     SelectNext,
@@ -22,5 +24,6 @@ pub enum Action {
     ClearScreen,
     Error(String),
     Help,
-    ListAction(ListAction)
+    ListAction(ListAction),
+    ChangeMode(Mode),
 }

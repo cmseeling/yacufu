@@ -8,11 +8,12 @@ use ratatui::{
 };
 use tokio::sync::mpsc::UnboundedSender;
 
-use crate::{action::Action, config::Config, tui::Event};
+use crate::{config::Config, ui::action::Action, ui::tui::Event};
 
-pub mod fps;
-pub mod home;
-pub mod main_menu;
+pub(crate) mod fps;
+pub(crate) mod home;
+pub(crate) mod main_menu;
+pub(crate) mod package_sources;
 
 /// `Component` is a trait that represents a visual and interactive element of the user interface.
 ///

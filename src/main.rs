@@ -2,16 +2,14 @@ use clap::Parser;
 use cli::Cli;
 use color_eyre::Result;
 
-use crate::app::App;
+use crate::ui::app::App;
 
-mod action;
-mod app;
 mod cli;
-mod components;
 mod config;
 mod errors;
 mod logging;
-mod tui;
+mod repositories;
+mod ui;
 
 #[tokio::main]
 async fn main() -> Result<()> {
