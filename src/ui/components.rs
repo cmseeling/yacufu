@@ -10,10 +10,10 @@ use tokio::sync::mpsc::UnboundedSender;
 
 use crate::{config::Config, ui::action::Action, ui::tui::Event};
 
-pub(crate) mod fps;
-pub(crate) mod home;
+pub(crate) mod installed_packages;
 pub(crate) mod main_menu;
 pub(crate) mod package_sources;
+pub(crate) mod system_page;
 
 /// `Component` is a trait that represents a visual and interactive element of the user interface.
 ///

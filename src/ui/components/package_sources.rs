@@ -13,7 +13,7 @@ use crate::{
     repositories::{apt::AptRepositories, Repository},
     ui::{
         action::{Action, ListAction},
-        app::Mode,
+        Focus, Mode,
     },
 };
 
@@ -22,6 +22,7 @@ use super::Component;
 #[derive(Default)]
 pub struct PackageSources {
     show: bool,
+    focused: bool,
     is_enabled: bool,
     repositories: AptRepositories,
     state: ListState,
@@ -32,6 +33,7 @@ impl PackageSources {
         let repositories = AptRepositories::default();
         Self {
             show: false,
+            focused: false,
             is_enabled: repositories.check_for_repository(),
             repositories,
             state: ListState::default(),
@@ -42,9 +44,22 @@ impl PackageSources {
 impl Component for PackageSources {
     fn update(&mut self, action: Action) -> Result<Option<Action>> {
         match action {
-            Action::ChangeMode(mode) => match mode {
-                Mode::PackageSources => self.show = true,
-                _ => self.show = false,
+            Action::ChangeMode(mode) => {
+                match mode {
+                    Mode::PackageSources => self.show = true,
+                    _ => self.show = false,
+                };
+                self.focused = false;
+            }
+            Action::ChangeFocus(focus) => match focus {
+                Focus::Page => {
+                    if self.show {
+                        self.focused = true
+                    } else {
+                        self.focused = false
+                    }
+                }
+                _ => self.focused = false,
             },
             Action::ListAction(list_action) => {
                 info!("PackageSources handling action: {list_action:?}");
@@ -66,7 +81,13 @@ impl Component for PackageSources {
     fn draw(&mut self, frame: &mut Frame, areas: &HashMap<&str, Rect>) -> Result<()> {
         if self.show && self.is_enabled {
             let area = areas.get("page").unwrap();
-            let block = Block::bordered().title("Package Sources");
+            let border_style = match self.focused {
+                true => Style::default().fg(Color::Blue),
+                false => Style::default(),
+            };
+            let block = Block::bordered()
+                .title("Package Sources")
+                .border_style(border_style);
             let inner = block.inner(*area);
 
             frame.render_widget(block, *area);

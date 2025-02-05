@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 use strum::Display;
 
-use super::app::Mode;
+use super::{Focus, Mode};
 
 #[derive(Debug, Clone, PartialEq, Eq, Display, Serialize, Deserialize)]
 pub enum ListAction {
@@ -26,4 +26,5 @@ pub enum Action {
     Help,
     ListAction(ListAction),
     ChangeMode(Mode),
+    ChangeFocus(Focus),
 }

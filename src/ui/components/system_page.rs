@@ -14,23 +14,27 @@ use crate::ui::{action::Action, Focus, Mode};
 use super::Component;
 
 #[derive(Default)]
-pub struct InstalledPackages {
+pub struct SystemPage {
     show: bool,
     focused: bool,
 }
 
-impl InstalledPackages {
+impl SystemPage {
     pub fn new() -> Self {
-        Self::default()
+        Self {
+            // The system page is selected by default
+            show: true,
+            focused: false,
+        }
     }
 }
 
-impl Component for InstalledPackages {
+impl Component for SystemPage {
     fn update(&mut self, action: Action) -> Result<Option<Action>> {
         match action {
             Action::ChangeMode(mode) => {
                 match mode {
-                    Mode::InstalledPackages => self.show = true,
+                    Mode::System => self.show = true,
                     _ => self.show = false,
                 };
                 self.focused = false;
@@ -46,7 +50,7 @@ impl Component for InstalledPackages {
                 _ => self.focused = false,
             },
             Action::ListAction(list_action) => {
-                info!("InstalledPackages handling action: {list_action:?}");
+                info!("SystemPage handling action: {list_action:?}");
                 match list_action {
                     // ListAction::SelectNext => self.state.select_next(),
                     // ListAction::SelectPrev => self.state.select_previous(),
@@ -69,9 +73,7 @@ impl Component for InstalledPackages {
                 true => Style::default().fg(Color::Blue),
                 false => Style::default(),
             };
-            let block = Block::bordered()
-                .title("Installed Packages")
-                .border_style(border_style);
+            let block = Block::bordered().title("System").border_style(border_style);
             // let inner = block.inner(*area);
 
             frame.render_widget(block, *area);

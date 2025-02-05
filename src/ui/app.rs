@@ -6,7 +6,6 @@ use ratatui::{
     layout::{Constraint, Layout},
     prelude::Rect,
 };
-use serde::{Deserialize, Serialize};
 use tokio::sync::mpsc;
 use tracing::{debug, info};
 
@@ -14,11 +13,13 @@ use crate::{
     config::Config,
     ui::action::Action,
     ui::components::{
-        fps::FpsCounter, home::Home, main_menu::MainMenu, package_sources::PackageSources,
-        Component,
+        installed_packages::InstalledPackages, main_menu::MainMenu,
+        package_sources::PackageSources, system_page::SystemPage, Component,
     },
     ui::tui::{Event, Tui},
 };
+
+use super::{Focus, Mode};
 
 pub struct App {
     config: Config,
@@ -28,17 +29,10 @@ pub struct App {
     should_quit: bool,
     should_suspend: bool,
     mode: Mode,
+    focus: Focus,
     last_tick_key_events: Vec<KeyEvent>,
     action_tx: mpsc::UnboundedSender<Action>,
     action_rx: mpsc::UnboundedReceiver<Action>,
-}
-
-#[derive(Default, Debug, Copy, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
-pub enum Mode {
-    #[default]
-    System,
-    PackageSources,
-    InstalledPackages,
 }
 
 impl App {
@@ -48,15 +42,16 @@ impl App {
             tick_rate,
             frame_rate,
             components: vec![
+                Box::new(InstalledPackages::new()),
                 Box::new(MainMenu::new()),
-                // Box::new(Home::new()),
-                // Box::new(FpsCounter::new()),
                 Box::new(PackageSources::new()),
+                Box::new(SystemPage::new()),
             ],
             should_quit: false,
             should_suspend: false,
             config: Config::new()?,
             mode: Mode::System,
+            focus: Focus::MainMenu,
             last_tick_key_events: Vec::new(),
             action_tx,
             action_rx,
