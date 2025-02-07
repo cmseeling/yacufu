@@ -12,7 +12,7 @@ use tracing::info;
 
 use crate::ui::{
     action::{Action, ListAction},
-    Focus, Mode,
+    Mode, Page,
 };
 
 use super::Component;
@@ -40,13 +40,13 @@ impl MainMenu {
 
     fn get_mode_action(&self) -> Option<Action> {
         if let Some(selected) = self.state.selected() {
-            let mode = match MENU_OPTIONS[selected] {
-                "System" => Mode::System,
-                "Installed Packages" => Mode::InstalledPackages,
-                "Package Sources" => Mode::PackageSources,
-                _ => Mode::System,
+            let page = match MENU_OPTIONS[selected] {
+                "System" => Page::System,
+                "Installed Packages" => Page::InstalledPackages,
+                "Package Sources" => Page::PackageSources,
+                _ => Page::System,
             };
-            Some(Action::ChangeMode(mode))
+            Some(Action::ChangePage(page))
         } else {
             None
         }
@@ -87,8 +87,8 @@ impl MainMenu {
 impl Component for MainMenu {
     fn update(&mut self, action: Action) -> Result<Option<Action>> {
         match action {
-            Action::ChangeFocus(focus_action) => match focus_action {
-                Focus::MainMenu => {
+            Action::ChangeMode(mode_action) => match mode_action {
+                Mode::MainMenu => {
                     self.focused = true;
                     Ok(None)
                 }
@@ -97,6 +97,14 @@ impl Component for MainMenu {
                     Ok(None)
                 }
             },
+            Action::FocusMainMenu => {
+                self.focused = true;
+                Ok(None)
+            }
+            Action::FocusPage => {
+                self.focused = false;
+                Ok(None)
+            }
             Action::ListAction(list_action) => {
                 info!("MainMenu handling action: {list_action:?}");
                 match list_action {
@@ -108,7 +116,7 @@ impl Component for MainMenu {
                         self.state.select(None);
                         Ok(None)
                     }
-                    ListAction::MarkSelection => Ok(Some(Action::ChangeFocus(Focus::Page))),
+                    ListAction::MarkSelection => Ok(Some(Action::FocusPage)),
                     _ => Ok(None),
                 }
             }

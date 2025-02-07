@@ -19,7 +19,7 @@ use crate::{
     ui::tui::{Event, Tui},
 };
 
-use super::{Focus, Mode};
+use super::{Mode, Page};
 
 pub struct App {
     config: Config,
@@ -29,7 +29,7 @@ pub struct App {
     should_quit: bool,
     should_suspend: bool,
     mode: Mode,
-    focus: Focus,
+    page: Page,
     last_tick_key_events: Vec<KeyEvent>,
     action_tx: mpsc::UnboundedSender<Action>,
     action_rx: mpsc::UnboundedReceiver<Action>,
@@ -50,8 +50,8 @@ impl App {
             should_quit: false,
             should_suspend: false,
             config: Config::new()?,
-            mode: Mode::System,
-            focus: Focus::MainMenu,
+            mode: Mode::MainMenu,
+            page: Page::System,
             last_tick_key_events: Vec::new(),
             action_tx,
             action_rx,
@@ -117,8 +117,38 @@ impl App {
 
     fn handle_key_event(&mut self, key: KeyEvent) -> Result<()> {
         let action_tx = self.action_tx.clone();
-        let Some(keymap) = self.config.keybindings.get(&self.mode) else {
-            return Ok(());
+        let keymap = {
+            let Some(universal_keybinds) = self.config.keybindings.get(&Mode::Universal) else {
+                return Ok(());
+            };
+            let list_keymap =
+                if self.mode.to_string().ends_with("List") || self.mode == Mode::MainMenu {
+                    match self.config.keybindings.get(&Mode::List) {
+                        Some(l_map) => l_map,
+                        None => &HashMap::new(),
+                    }
+                } else {
+                    &HashMap::new()
+                };
+            let tabs_keymap = if self.mode.to_string().ends_with("Tabs") {
+                match self.config.keybindings.get(&Mode::Tabs) {
+                    Some(t_map) => t_map,
+                    None => &HashMap::new(),
+                }
+            } else {
+                &HashMap::new()
+            };
+            let mode_keymap = match self.config.keybindings.get(&self.mode) {
+                Some(m_map) => m_map,
+                None => &HashMap::new(),
+            };
+            universal_keybinds
+                .iter()
+                .chain(list_keymap.iter())
+                .chain(tabs_keymap.iter())
+                .chain(mode_keymap.iter())
+                .map(|(k, v)| (k.clone(), v.clone()))
+                .collect::<HashMap<_, _>>()
         };
         match keymap.get(&vec![key]) {
             Some(action) => {

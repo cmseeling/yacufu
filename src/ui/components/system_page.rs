@@ -9,7 +9,7 @@ use ratatui::{
 };
 use tracing::info;
 
-use crate::ui::{action::Action, Focus, Mode};
+use crate::ui::{action::Action, Mode, Page};
 
 use super::Component;
 
@@ -32,15 +32,22 @@ impl SystemPage {
 impl Component for SystemPage {
     fn update(&mut self, action: Action) -> Result<Option<Action>> {
         match action {
-            Action::ChangeMode(mode) => {
-                match mode {
-                    Mode::System => self.show = true,
+            Action::ChangePage(page) => {
+                match page {
+                    Page::System => self.show = true,
                     _ => self.show = false,
                 };
                 self.focused = false;
             }
-            Action::ChangeFocus(focus) => match focus {
-                Focus::Page => {
+            Action::FocusPage => {
+                if self.show {
+                    self.focused = true
+                } else {
+                    self.focused = false
+                }
+            }
+            Action::ChangeMode(mode) => match mode {
+                Mode::System => {
                     if self.show {
                         self.focused = true
                     } else {

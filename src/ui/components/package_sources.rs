@@ -13,16 +13,24 @@ use crate::{
     repositories::{apt::AptRepositories, Repository},
     ui::{
         action::{Action, ListAction},
-        Focus, Mode,
+        Mode, Page,
     },
 };
 
 use super::Component;
 
 #[derive(Default)]
+enum PageFocus {
+    #[default]
+    Tabs,
+    List,
+}
+
+#[derive(Default)]
 pub struct PackageSources {
     show: bool,
     focused: bool,
+    page_focus: PageFocus,
     is_enabled: bool,
     repositories: AptRepositories,
     state: ListState,
@@ -34,6 +42,7 @@ impl PackageSources {
         Self {
             show: false,
             focused: false,
+            page_focus: PageFocus::Tabs,
             is_enabled: repositories.check_for_repository(),
             repositories,
             state: ListState::default(),
@@ -44,20 +53,37 @@ impl PackageSources {
 impl Component for PackageSources {
     fn update(&mut self, action: Action) -> Result<Option<Action>> {
         match action {
-            Action::ChangeMode(mode) => {
-                match mode {
-                    Mode::PackageSources => self.show = true,
+            Action::ChangePage(page) => {
+                match page {
+                    Page::PackageSources => self.show = true,
                     _ => self.show = false,
                 };
                 self.focused = false;
             }
-            Action::ChangeFocus(focus) => match focus {
-                Focus::Page => {
+            Action::FocusPage => {
+                if self.show {
+                    self.focused = true
+                } else {
+                    self.focused = false
+                }
+                self.page_focus = PageFocus::Tabs
+            }
+            Action::ChangeMode(mode) => match mode {
+                Mode::PackageSourceTabs => {
                     if self.show {
                         self.focused = true
                     } else {
                         self.focused = false
                     }
+                    self.page_focus = PageFocus::Tabs
+                }
+                Mode::PackageSourceList => {
+                    if self.show {
+                        self.focused = true
+                    } else {
+                        self.focused = false
+                    }
+                    self.page_focus = PageFocus::List
                 }
                 _ => self.focused = false,
             },

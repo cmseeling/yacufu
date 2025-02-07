@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 use strum::Display;
 
-use super::{Focus, Mode};
+use super::{Mode, Page};
 
 #[derive(Debug, Clone, PartialEq, Eq, Display, Serialize, Deserialize)]
 pub enum ListAction {
@@ -26,5 +26,7 @@ pub enum Action {
     Help,
     ListAction(ListAction),
     ChangeMode(Mode),
-    ChangeFocus(Focus),
+    ChangePage(Page),
+    FocusPage,
+    FocusMainMenu,
 }

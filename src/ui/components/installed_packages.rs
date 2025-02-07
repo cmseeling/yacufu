@@ -9,14 +9,22 @@ use ratatui::{
 };
 use tracing::info;
 
-use crate::ui::{action::Action, Focus, Mode};
+use crate::ui::{action::Action, Mode, Page};
 
 use super::Component;
+
+#[derive(Default)]
+enum PageFocus {
+    #[default]
+    Tabs,
+    List,
+}
 
 #[derive(Default)]
 pub struct InstalledPackages {
     show: bool,
     focused: bool,
+    page_focus: PageFocus,
 }
 
 impl InstalledPackages {
@@ -28,20 +36,37 @@ impl InstalledPackages {
 impl Component for InstalledPackages {
     fn update(&mut self, action: Action) -> Result<Option<Action>> {
         match action {
-            Action::ChangeMode(mode) => {
-                match mode {
-                    Mode::InstalledPackages => self.show = true,
+            Action::ChangePage(page) => {
+                match page {
+                    Page::InstalledPackages => self.show = true,
                     _ => self.show = false,
                 };
                 self.focused = false;
             }
-            Action::ChangeFocus(focus) => match focus {
-                Focus::Page => {
+            Action::FocusPage => {
+                if self.show {
+                    self.focused = true
+                } else {
+                    self.focused = false
+                }
+                self.page_focus = PageFocus::Tabs
+            }
+            Action::ChangeMode(mode) => match mode {
+                Mode::InstalledPackageTabs => {
                     if self.show {
                         self.focused = true
                     } else {
                         self.focused = false
                     }
+                    self.page_focus = PageFocus::Tabs
+                }
+                Mode::InstalledPackageList => {
+                    if self.show {
+                        self.focused = true
+                    } else {
+                        self.focused = false
+                    }
+                    self.page_focus = PageFocus::List
                 }
                 _ => self.focused = false,
             },
