@@ -1,4 +1,7 @@
-use std::collections::HashMap;
+use std::{
+    collections::HashMap,
+    fmt::{self, format},
+};
 
 use color_eyre::Result;
 use ratatui::{
@@ -19,7 +22,7 @@ use crate::{
 
 use super::Component;
 
-#[derive(Default)]
+#[derive(Debug, Default, PartialEq)]
 enum PageFocus {
     #[default]
     Tabs,
@@ -33,7 +36,8 @@ pub struct PackageSources {
     page_focus: PageFocus,
     is_enabled: bool,
     repositories: AptRepositories,
-    state: ListState,
+    selected_tab: usize,
+    list_state: ListState,
 }
 
 impl PackageSources {
@@ -45,8 +49,107 @@ impl PackageSources {
             page_focus: PageFocus::Tabs,
             is_enabled: repositories.check_for_repository(),
             repositories,
-            state: ListState::default(),
+            selected_tab: 0,
+            list_state: ListState::default(),
         }
+    }
+
+    fn get_view_state_debug(&self) -> String {
+        format!(
+            "PackageSources: {{ show: {:?}, focused: {:?}, page_focus: {:?} }}",
+            self.show, self.focused, self.page_focus
+        )
+    }
+
+    fn handle_list_action(&mut self, list_action: ListAction) -> Result<Option<Action>> {
+        if self.show && self.focused {
+            info!("PackageSources handling action: {list_action:?}");
+            info!("{}", self.get_view_state_debug());
+            if self.page_focus == PageFocus::Tabs {
+                self.handle_tab_movement(list_action)
+            } else {
+                self.handle_list_movement(list_action)
+            }
+        } else {
+            Ok(None)
+        }
+    }
+
+    fn handle_tab_movement(&mut self, list_action: ListAction) -> Result<Option<Action>> {
+        match list_action {
+            ListAction::SelectNext => self.next_tab_item(),
+            ListAction::SelectPrev => self.prev_tab_item(),
+            _ => Ok(None),
+        }
+    }
+
+    fn next_tab_item(&mut self) -> Result<Option<Action>> {
+        let selected = self.list_state.selected().unwrap_or(0);
+        if selected < 2 {
+            self.selected_tab += 1;
+        } else {
+            self.selected_tab = 0;
+        }
+        Ok(None)
+    }
+
+    fn prev_tab_item(&mut self) -> Result<Option<Action>> {
+        let selected = self.list_state.selected().unwrap_or(0);
+        if selected > 0 {
+            self.selected_tab -= 1;
+        } else {
+            self.selected_tab = 2;
+        }
+        Ok(None)
+    }
+
+    fn handle_list_movement(&mut self, list_action: ListAction) -> Result<Option<Action>> {
+        match list_action {
+            ListAction::SelectNext => self.next_list_item(),
+            ListAction::SelectPrev => self.prev_list_item(),
+            ListAction::SelectFirst => self.first_list_item(),
+            ListAction::SelectLast => self.last_list_item(),
+            ListAction::SelectNone => self.clear_list_item(),
+            ListAction::MarkSelection => Ok(None), //TODO: implement selection popup
+            _ => Ok(None),
+        }
+    }
+
+    fn clear_list_item(&mut self) -> Result<Option<Action>> {
+        self.list_state.select(None);
+        Ok(None)
+    }
+
+    fn next_list_item(&mut self) -> Result<Option<Action>> {
+        let selected = self.list_state.selected().unwrap_or(0);
+        if selected < self.repositories.get_repository_list().len() - 1 {
+            self.list_state.select_next();
+        } else {
+            self.list_state.select_first();
+        }
+        Ok(None)
+    }
+
+    fn prev_list_item(&mut self) -> Result<Option<Action>> {
+        let selected = self.list_state.selected().unwrap_or(0);
+        if selected > 0 {
+            self.list_state.select_previous();
+        } else {
+            self.list_state
+                .select(Some(self.repositories.get_repository_list().len() - 1));
+        }
+        Ok(None)
+    }
+
+    fn first_list_item(&mut self) -> Result<Option<Action>> {
+        self.list_state.select_first();
+        Ok(None)
+    }
+
+    fn last_list_item(&mut self) -> Result<Option<Action>> {
+        self.list_state
+            .select(Some(self.repositories.get_repository_list().len() - 1));
+        Ok(None)
     }
 }
 
@@ -59,6 +162,7 @@ impl Component for PackageSources {
                     _ => self.show = false,
                 };
                 self.focused = false;
+                Ok(None)
             }
             Action::FocusPage => {
                 if self.show {
@@ -66,42 +170,38 @@ impl Component for PackageSources {
                 } else {
                     self.focused = false
                 }
-                self.page_focus = PageFocus::Tabs
+                self.page_focus = PageFocus::Tabs;
+                Ok(None)
             }
-            Action::ChangeMode(mode) => match mode {
-                Mode::PackageSourceTabs => {
-                    if self.show {
-                        self.focused = true
-                    } else {
-                        self.focused = false
-                    }
-                    self.page_focus = PageFocus::Tabs
-                }
-                Mode::PackageSourceList => {
-                    if self.show {
-                        self.focused = true
-                    } else {
-                        self.focused = false
-                    }
-                    self.page_focus = PageFocus::List
-                }
-                _ => self.focused = false,
-            },
-            Action::ListAction(list_action) => {
-                info!("PackageSources handling action: {list_action:?}");
-                match list_action {
-                    // ListAction::SelectNext => self.state.select_next(),
-                    // ListAction::SelectPrev => self.state.select_previous(),
-                    // ListAction::SelectFirst => self.state.select_first(),
-                    // ListAction::SelectLast => self.state.select_last(),
-                    // ListAction::SelectNone => self.state.select(None),
-                    // ListAction::MarkSelection => todo!(),
-                    _ => {}
-                }
+            Action::FocusMainMenu => {
+                self.focused = false;
+                Ok(None)
             }
-            _ => {}
+            Action::ChangeMode(mode) => {
+                match mode {
+                    Mode::PackageSourceTabs => {
+                        if self.show {
+                            self.focused = true
+                        } else {
+                            self.focused = false
+                        }
+                        self.page_focus = PageFocus::Tabs
+                    }
+                    Mode::PackageSourceList => {
+                        if self.show {
+                            self.focused = true
+                        } else {
+                            self.focused = false
+                        }
+                        self.page_focus = PageFocus::List
+                    }
+                    _ => self.focused = false,
+                };
+                Ok(None)
+            }
+            Action::ListAction(list_action) => self.handle_list_action(list_action),
+            _ => Ok(None),
         }
-        Ok(None)
     }
 
     fn draw(&mut self, frame: &mut Frame, areas: &HashMap<&str, Rect>) -> Result<()> {
@@ -131,7 +231,7 @@ impl Component for PackageSources {
                         .fg(Color::Green)
                         .add_modifier(Modifier::UNDERLINED),
                 )
-                .select(0)
+                .select(self.selected_tab)
                 .padding("", "")
                 .divider(" ");
             frame.render_widget(tabs, centered);
@@ -144,7 +244,7 @@ impl Component for PackageSources {
                 .block(Block::bordered().borders(Borders::TOP))
                 .highlight_style(Style::new().bg(Color::Blue).add_modifier(Modifier::BOLD))
                 .highlight_symbol(">");
-            frame.render_stateful_widget(list, page, &mut self.state);
+            frame.render_stateful_widget(list, page, &mut self.list_state);
         }
         Ok(())
     }

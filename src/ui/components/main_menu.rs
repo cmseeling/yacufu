@@ -19,7 +19,9 @@ use super::Component;
 
 lazy_static! {
     static ref MENU_OPTIONS: Vec<&'static str> =
-        vec!["System", "Installed Packages", "Package Sources"];
+        vec!["System",
+        // "Installed Packages",
+        "Package Sources"];
 }
 
 #[derive(Default)]
@@ -54,7 +56,7 @@ impl MainMenu {
 
     fn next_option(&mut self) -> Option<Action> {
         let selected = self.state.selected().unwrap_or(0);
-        info!("index is {:?}", selected);
+        // info!("index is {:?}", selected);
         if selected < MENU_OPTIONS.len() - 1 {
             self.state.select_next();
         } else {
@@ -106,18 +108,22 @@ impl Component for MainMenu {
                 Ok(None)
             }
             Action::ListAction(list_action) => {
-                info!("MainMenu handling action: {list_action:?}");
-                match list_action {
-                    ListAction::SelectNext => Ok(self.next_option()),
-                    ListAction::SelectPrev => Ok(self.prev_option()),
-                    ListAction::SelectFirst => Ok(self.first_option()),
-                    ListAction::SelectLast => Ok(self.last_option()),
-                    ListAction::SelectNone => {
-                        self.state.select(None);
-                        Ok(None)
+                if self.focused {
+                    info!("MainMenu handling action: {list_action:?}");
+                    match list_action {
+                        ListAction::SelectNext => Ok(self.next_option()),
+                        ListAction::SelectPrev => Ok(self.prev_option()),
+                        ListAction::SelectFirst => Ok(self.first_option()),
+                        ListAction::SelectLast => Ok(self.last_option()),
+                        ListAction::SelectNone => {
+                            self.state.select(None);
+                            Ok(None)
+                        }
+                        ListAction::MarkSelection => Ok(Some(Action::FocusPage)),
+                        _ => Ok(None),
                     }
-                    ListAction::MarkSelection => Ok(Some(Action::FocusPage)),
-                    _ => Ok(None),
+                } else {
+                    Ok(None)
                 }
             }
             _ => Ok(None),

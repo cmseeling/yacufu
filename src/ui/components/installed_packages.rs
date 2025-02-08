@@ -71,15 +71,17 @@ impl Component for InstalledPackages {
                 _ => self.focused = false,
             },
             Action::ListAction(list_action) => {
-                info!("InstalledPackages handling action: {list_action:?}");
-                match list_action {
-                    // ListAction::SelectNext => self.state.select_next(),
-                    // ListAction::SelectPrev => self.state.select_previous(),
-                    // ListAction::SelectFirst => self.state.select_first(),
-                    // ListAction::SelectLast => self.state.select_last(),
-                    // ListAction::SelectNone => self.state.select(None),
-                    // ListAction::MarkSelection => todo!(),
-                    _ => {}
+                if self.show && self.focused {
+                    info!("InstalledPackages handling action: {list_action:?}");
+                    match list_action {
+                        // ListAction::SelectNext => self.state.select_next(),
+                        // ListAction::SelectPrev => self.state.select_previous(),
+                        // ListAction::SelectFirst => self.state.select_first(),
+                        // ListAction::SelectLast => self.state.select_last(),
+                        // ListAction::SelectNone => self.state.select(None),
+                        // ListAction::MarkSelection => todo!(),
+                        _ => {}
+                    }
                 }
             }
             _ => {}

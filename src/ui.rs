@@ -15,10 +15,10 @@ pub enum Mode {
     #[default]
     MainMenu,
     System,
-    PackageSourceTabs,
-    PackageSourceList,
     InstalledPackageTabs,
     InstalledPackageList,
+    PackageSourceTabs,
+    PackageSourceList,
     ConfirmationPopup,
 }
 

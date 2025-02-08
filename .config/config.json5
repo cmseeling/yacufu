@@ -6,6 +6,7 @@
       "<Ctrl-c>": "Quit", // Yet another way to quit
       "<Ctrl-z>": "Suspend", // Suspend the application
       "<Ctrl-h>": "Help", // Suspend the application
+      "<esc>": "FocusMainMenu",
     },
     "List": {
       "<g>": {
@@ -41,6 +42,47 @@
       "<enter>": {
         "ListAction": "MarkSelection"
       }
-    }
+    },
+    "Tabs": {
+      "<h>": {
+        "ListAction": "SelectPrev"
+      },
+      "<left>": {
+        "ListAction": "SelectPrev"
+      },
+      "<l>": {
+        "ListAction": "SelectNext"
+      },
+      "<right>": {
+        "ListAction": "SelectNext"
+      },
+    },
+    // "System": {},
+    "InstalledPackageTabs": {
+      "<enter>": {
+        "ChangeMode": "InstalledPackageList"
+      },
+      "<tab>": {
+        "ChangeMode": "InstalledPackageList"
+      },
+    },
+    "InstalledPackageList": {
+      "<tab>": {
+        "ChangeMode": "InstalledPackageTabs"
+      },
+    },
+    "PackageSourceTabs": {
+      "<enter>": {
+        "ChangeMode": "PackageSourceList"
+      },
+      "<tab>": {
+        "ChangeMode": "PackageSourceList"
+      },
+    },
+    "PackageSourceList": {
+      "<tab>": {
+        "ChangeMode": "PackageSourceTabs"
+      },
+    },
   }
 }

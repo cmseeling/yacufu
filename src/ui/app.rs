@@ -117,6 +117,7 @@ impl App {
 
     fn handle_key_event(&mut self, key: KeyEvent) -> Result<()> {
         let action_tx = self.action_tx.clone();
+        info!("Getting keymap for {:?}", self.mode);
         let keymap = {
             let Some(universal_keybinds) = self.config.keybindings.get(&Mode::Universal) else {
                 return Ok(());
@@ -185,6 +186,9 @@ impl App {
                 Action::ClearScreen => tui.terminal.clear()?,
                 Action::Resize(w, h) => self.handle_resize(tui, w, h)?,
                 Action::Render => self.render(tui)?,
+                Action::ChangeMode(mode) => self.mode = mode,
+                Action::ChangePage(page) => self.page = page,
+                Action::FocusMainMenu => self.mode = Mode::MainMenu,
                 _ => {}
             }
             for component in self.components.iter_mut() {
