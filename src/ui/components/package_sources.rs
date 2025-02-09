@@ -16,7 +16,7 @@ use crate::{
     repositories::{apt::AptRepositories, Repository},
     ui::{
         action::{Action, ListAction},
-        Mode, Page,
+        Mode, Page, ViewState,
     },
 };
 
@@ -31,9 +31,6 @@ enum PageFocus {
 
 #[derive(Default)]
 pub struct PackageSources {
-    show: bool,
-    focused: bool,
-    page_focus: PageFocus,
     is_enabled: bool,
     repositories: AptRepositories,
     selected_tab: usize,
@@ -44,34 +41,10 @@ impl PackageSources {
     pub fn new() -> Self {
         let repositories = AptRepositories::default();
         Self {
-            show: false,
-            focused: false,
-            page_focus: PageFocus::Tabs,
             is_enabled: repositories.check_for_repository(),
             repositories,
             selected_tab: 0,
             list_state: ListState::default(),
-        }
-    }
-
-    fn get_view_state_debug(&self) -> String {
-        format!(
-            "PackageSources: {{ show: {:?}, focused: {:?}, page_focus: {:?} }}",
-            self.show, self.focused, self.page_focus
-        )
-    }
-
-    fn handle_list_action(&mut self, list_action: ListAction) -> Result<Option<Action>> {
-        if self.show && self.focused {
-            info!("PackageSources handling action: {list_action:?}");
-            info!("{}", self.get_view_state_debug());
-            if self.page_focus == PageFocus::Tabs {
-                self.handle_tab_movement(list_action)
-            } else {
-                self.handle_list_movement(list_action)
-            }
-        } else {
-            Ok(None)
         }
     }
 
@@ -84,8 +57,7 @@ impl PackageSources {
     }
 
     fn next_tab_item(&mut self) -> Result<Option<Action>> {
-        let selected = self.list_state.selected().unwrap_or(0);
-        if selected < 2 {
+        if self.selected_tab < 2 {
             self.selected_tab += 1;
         } else {
             self.selected_tab = 0;
@@ -94,8 +66,7 @@ impl PackageSources {
     }
 
     fn prev_tab_item(&mut self) -> Result<Option<Action>> {
-        let selected = self.list_state.selected().unwrap_or(0);
-        if selected > 0 {
+        if self.selected_tab > 0 {
             self.selected_tab -= 1;
         } else {
             self.selected_tab = 2;
@@ -110,7 +81,7 @@ impl PackageSources {
             ListAction::SelectFirst => self.first_list_item(),
             ListAction::SelectLast => self.last_list_item(),
             ListAction::SelectNone => self.clear_list_item(),
-            ListAction::MarkSelection => Ok(None), //TODO: implement selection popup
+            ListAction::MakeSelection => Ok(None), //TODO: implement selection popup
             _ => Ok(None),
         }
     }
@@ -154,62 +125,50 @@ impl PackageSources {
 }
 
 impl Component for PackageSources {
-    fn update(&mut self, action: Action) -> Result<Option<Action>> {
+    fn update(&mut self, action: Action, view_state: ViewState) -> Result<Option<Action>> {
         match action {
-            Action::ChangePage(page) => {
-                match page {
-                    Page::PackageSources => self.show = true,
-                    _ => self.show = false,
-                };
-                self.focused = false;
-                Ok(None)
-            }
-            Action::FocusPage => {
-                if self.show {
-                    self.focused = true
+            Action::ListAction(list_action) => match view_state.mode {
+                Mode::PackageSourceTabs => self.handle_tab_movement(list_action),
+                Mode::PackageSourceList => self.handle_list_movement(list_action),
+                _ => Ok(None),
+            },
+            Action::NextMode => {
+                if view_state.mode == Mode::PackageSourceTabs {
+                    Ok(Some(Action::UpdateViewState(ViewState::new(
+                        Mode::PackageSourceList,
+                        view_state.page,
+                    ))))
                 } else {
-                    self.focused = false
+                    Ok(None)
                 }
-                self.page_focus = PageFocus::Tabs;
-                Ok(None)
             }
-            Action::FocusMainMenu => {
-                self.focused = false;
-                Ok(None)
+            Action::PrevMode => {
+                if view_state.mode == Mode::PackageSourceList {
+                    Ok(Some(Action::UpdateViewState(ViewState::new(
+                        Mode::PackageSourceTabs,
+                        view_state.page,
+                    ))))
+                } else {
+                    Ok(None)
+                }
             }
-            Action::ChangeMode(mode) => {
-                match mode {
-                    Mode::PackageSourceTabs => {
-                        if self.show {
-                            self.focused = true
-                        } else {
-                            self.focused = false
-                        }
-                        self.page_focus = PageFocus::Tabs
-                    }
-                    Mode::PackageSourceList => {
-                        if self.show {
-                            self.focused = true
-                        } else {
-                            self.focused = false
-                        }
-                        self.page_focus = PageFocus::List
-                    }
-                    _ => self.focused = false,
-                };
-                Ok(None)
-            }
-            Action::ListAction(list_action) => self.handle_list_action(list_action),
             _ => Ok(None),
         }
     }
 
-    fn draw(&mut self, frame: &mut Frame, areas: &HashMap<&str, Rect>) -> Result<()> {
-        if self.show && self.is_enabled {
+    fn draw(
+        &mut self,
+        view_state: ViewState,
+        frame: &mut Frame,
+        areas: &HashMap<&str, Rect>,
+    ) -> Result<()> {
+        if view_state.page == Page::PackageSources {
             let area = areas.get("page").unwrap();
-            let border_style = match self.focused {
-                true => Style::default().fg(Color::Blue),
-                false => Style::default(),
+            let border_style = match view_state.mode {
+                Mode::PackageSourceTabs | Mode::PackageSourceList => {
+                    Style::default().fg(Color::Blue)
+                }
+                _ => Style::default(),
             };
             let block = Block::bordered()
                 .title("Package Sources")

@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 use strum::Display;
 
-use super::{Mode, Page};
+use super::ViewState;
 
 #[derive(Debug, Clone, PartialEq, Eq, Display, Serialize, Deserialize)]
 pub enum ListAction {
@@ -10,7 +10,7 @@ pub enum ListAction {
     SelectFirst,
     SelectLast,
     SelectNone,
-    MarkSelection,
+    MakeSelection,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Display, Serialize, Deserialize)]
@@ -25,8 +25,8 @@ pub enum Action {
     Error(String),
     Help,
     ListAction(ListAction),
-    ChangeMode(Mode),
-    ChangePage(Page),
-    FocusPage,
+    UpdateViewState(ViewState),
     FocusMainMenu,
+    NextMode,
+    PrevMode,
 }

@@ -12,7 +12,7 @@ use tracing::info;
 
 use crate::ui::{
     action::{Action, ListAction},
-    Mode, Page,
+    Mode, Page, ViewState,
 };
 
 use super::Component;
@@ -26,7 +26,6 @@ lazy_static! {
 
 #[derive(Default)]
 pub struct MainMenu {
-    focused: bool,
     state: ListState,
 }
 
@@ -34,13 +33,10 @@ impl MainMenu {
     pub fn new() -> Self {
         let mut state = ListState::default();
         state.select(Some(0));
-        Self {
-            focused: true,
-            state,
-        }
+        Self { state }
     }
 
-    fn get_mode_action(&self) -> Option<Action> {
+    fn change_page(&self) -> Option<Action> {
         if let Some(selected) = self.state.selected() {
             let page = match MENU_OPTIONS[selected] {
                 "System" => Page::System,
@@ -48,7 +44,10 @@ impl MainMenu {
                 "Package Sources" => Page::PackageSources,
                 _ => Page::System,
             };
-            Some(Action::ChangePage(page))
+            Some(Action::UpdateViewState(ViewState::new(
+                Mode::MainMenu,
+                page,
+            )))
         } else {
             None
         }
@@ -62,7 +61,7 @@ impl MainMenu {
         } else {
             self.state.select_first();
         }
-        self.get_mode_action()
+        self.change_page()
     }
 
     fn prev_option(&mut self) -> Option<Action> {
@@ -72,43 +71,43 @@ impl MainMenu {
         } else {
             self.state.select(Some(MENU_OPTIONS.len() - 1));
         }
-        self.get_mode_action()
+        self.change_page()
     }
 
     fn first_option(&mut self) -> Option<Action> {
         self.state.select_first();
-        self.get_mode_action()
+        self.change_page()
     }
 
     fn last_option(&mut self) -> Option<Action> {
         self.state.select(Some(MENU_OPTIONS.len() - 1));
-        self.get_mode_action()
+        self.change_page()
+    }
+
+    fn focus_page(&self, view_state: ViewState) -> Option<Action> {
+        match view_state.page {
+            Page::System => Some(Action::UpdateViewState(ViewState::new(
+                Mode::System,
+                view_state.page,
+            ))),
+            Page::InstalledPackages => Some(Action::UpdateViewState(ViewState::new(
+                Mode::InstalledPackageTabs,
+                view_state.page,
+            ))),
+            Page::PackageSources => Some(Action::UpdateViewState(ViewState::new(
+                Mode::PackageSourceTabs,
+                view_state.page,
+            ))),
+            _ => None,
+        }
     }
 }
 
 impl Component for MainMenu {
-    fn update(&mut self, action: Action) -> Result<Option<Action>> {
+    fn update(&mut self, action: Action, view_state: ViewState) -> Result<Option<Action>> {
         match action {
-            Action::ChangeMode(mode_action) => match mode_action {
-                Mode::MainMenu => {
-                    self.focused = true;
-                    Ok(None)
-                }
-                _ => {
-                    self.focused = false;
-                    Ok(None)
-                }
-            },
-            Action::FocusMainMenu => {
-                self.focused = true;
-                Ok(None)
-            }
-            Action::FocusPage => {
-                self.focused = false;
-                Ok(None)
-            }
             Action::ListAction(list_action) => {
-                if self.focused {
+                if view_state.mode == Mode::MainMenu {
                     info!("MainMenu handling action: {list_action:?}");
                     match list_action {
                         ListAction::SelectNext => Ok(self.next_option()),
@@ -119,7 +118,7 @@ impl Component for MainMenu {
                             self.state.select(None);
                             Ok(None)
                         }
-                        ListAction::MarkSelection => Ok(Some(Action::FocusPage)),
+                        ListAction::MakeSelection => Ok(self.focus_page(view_state)),
                         _ => Ok(None),
                     }
                 } else {
@@ -130,11 +129,16 @@ impl Component for MainMenu {
         }
     }
 
-    fn draw(&mut self, frame: &mut Frame, areas: &HashMap<&str, Rect>) -> Result<()> {
+    fn draw(
+        &mut self,
+        view_state: ViewState,
+        frame: &mut Frame,
+        areas: &HashMap<&str, Rect>,
+    ) -> Result<()> {
         let area = areas.get("menu").unwrap();
-        let border_style = match self.focused {
-            true => Style::default().fg(Color::Blue),
-            false => Style::default(),
+        let border_style = match view_state.mode {
+            Mode::MainMenu => Style::default().fg(Color::Blue),
+            _ => Style::default(),
         };
         let list = List::new(MENU_OPTIONS.clone())
             .block(

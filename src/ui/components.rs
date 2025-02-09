@@ -10,6 +10,8 @@ use tokio::sync::mpsc::UnboundedSender;
 
 use crate::{config::Config, ui::action::Action, ui::tui::Event};
 
+use super::ViewState;
+
 pub(crate) mod installed_packages;
 pub(crate) mod main_menu;
 pub(crate) mod package_sources;
@@ -111,7 +113,7 @@ pub trait Component {
     /// # Returns
     ///
     /// * `Result<Option<Action>>` - An action to be processed or none.
-    fn update(&mut self, action: Action) -> Result<Option<Action>> {
+    fn update(&mut self, action: Action, view_state: ViewState) -> Result<Option<Action>> {
         let _ = action; // to appease clippy
         Ok(None)
     }
@@ -125,5 +127,10 @@ pub trait Component {
     /// # Returns
     ///
     /// * `Result<()>` - An Ok result or an error.
-    fn draw(&mut self, frame: &mut Frame, areas: &HashMap<&str, Rect>) -> Result<()>;
+    fn draw(
+        &mut self,
+        view_state: ViewState,
+        frame: &mut Frame,
+        areas: &HashMap<&str, Rect>,
+    ) -> Result<()>;
 }

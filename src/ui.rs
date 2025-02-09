@@ -36,3 +36,15 @@ pub enum Page {
     InstalledPackages,
     ConfirmationPopup,
 }
+
+#[derive(Default, Debug, Copy, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
+pub struct ViewState {
+    page: Page,
+    mode: Mode,
+}
+
+impl ViewState {
+    fn new(mode: Mode, page: Page) -> Self {
+        Self { mode, page }
+    }
+}

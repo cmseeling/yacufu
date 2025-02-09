@@ -9,7 +9,7 @@ use ratatui::{
 };
 use tracing::info;
 
-use crate::ui::{action::Action, Mode, Page};
+use crate::ui::{action::Action, Mode, Page, ViewState};
 
 use super::Component;
 
@@ -22,9 +22,9 @@ enum PageFocus {
 
 #[derive(Default)]
 pub struct InstalledPackages {
-    show: bool,
-    focused: bool,
-    page_focus: PageFocus,
+    // show: bool,
+    // focused: bool,
+    // page_focus: PageFocus,
 }
 
 impl InstalledPackages {
@@ -34,67 +34,64 @@ impl InstalledPackages {
 }
 
 impl Component for InstalledPackages {
-    fn update(&mut self, action: Action) -> Result<Option<Action>> {
+    fn update(&mut self, action: Action, view_state: ViewState) -> Result<Option<Action>> {
         match action {
-            Action::ChangePage(page) => {
-                match page {
-                    Page::InstalledPackages => self.show = true,
-                    _ => self.show = false,
-                };
-                self.focused = false;
-            }
-            Action::FocusPage => {
-                if self.show {
-                    self.focused = true
-                } else {
-                    self.focused = false
-                }
-                self.page_focus = PageFocus::Tabs
-            }
-            Action::ChangeMode(mode) => match mode {
-                Mode::InstalledPackageTabs => {
-                    if self.show {
-                        self.focused = true
-                    } else {
-                        self.focused = false
-                    }
-                    self.page_focus = PageFocus::Tabs
-                }
-                Mode::InstalledPackageList => {
-                    if self.show {
-                        self.focused = true
-                    } else {
-                        self.focused = false
-                    }
-                    self.page_focus = PageFocus::List
-                }
-                _ => self.focused = false,
-            },
             Action::ListAction(list_action) => {
-                if self.show && self.focused {
-                    info!("InstalledPackages handling action: {list_action:?}");
-                    match list_action {
-                        // ListAction::SelectNext => self.state.select_next(),
-                        // ListAction::SelectPrev => self.state.select_previous(),
-                        // ListAction::SelectFirst => self.state.select_first(),
-                        // ListAction::SelectLast => self.state.select_last(),
-                        // ListAction::SelectNone => self.state.select(None),
-                        // ListAction::MarkSelection => todo!(),
-                        _ => {}
+                match view_state.mode {
+                    Mode::InstalledPackageList => {
+                        info!("InstalledPackages handling action: {list_action:?}");
+                        match list_action {
+                            // ListAction::SelectNext => self.state.select_next(),
+                            // ListAction::SelectPrev => self.state.select_previous(),
+                            // ListAction::SelectFirst => self.state.select_first(),
+                            // ListAction::SelectLast => self.state.select_last(),
+                            // ListAction::SelectNone => self.state.select(None),
+                            // ListAction::MarkSelection => todo!(),
+                            _ => {}
+                        }
                     }
+                    Mode::InstalledPackageTabs => {} //TODO: handle tabs
+                    _ => {}
                 }
             }
+            // Action::NextMode => {
+            //     if view_state.mode == Mode::InstalledPackageTabs {
+            //         Ok(Some(Action::UpdateViewState(ViewState::new(
+            //             Mode::InstalledPackageList,
+            //             view_state.page,
+            //         ))))
+            //     } else {
+            //         Ok(None)
+            //     }
+            // }
+            // Action::PrevMode => {
+            //     if view_state.mode == Mode::InstalledPackageList {
+            //         Ok(Some(Action::UpdateViewState(ViewState::new(
+            //             Mode::InstalledPackageTabs,
+            //             view_state.page,
+            //         ))))
+            //     } else {
+            //         Ok(None)
+            //     }
+            // }
             _ => {}
         }
         Ok(None)
     }
 
-    fn draw(&mut self, frame: &mut Frame, areas: &HashMap<&str, Rect>) -> Result<()> {
-        if self.show {
+    fn draw(
+        &mut self,
+        view_state: ViewState,
+        frame: &mut Frame,
+        areas: &HashMap<&str, Rect>,
+    ) -> Result<()> {
+        if view_state.page == Page::InstalledPackages {
             let area = areas.get("page").unwrap();
-            let border_style = match self.focused {
-                true => Style::default().fg(Color::Blue),
-                false => Style::default(),
+            let border_style = match view_state.mode {
+                Mode::InstalledPackageTabs | Mode::InstalledPackageList => {
+                    Style::default().fg(Color::Blue)
+                }
+                _ => Style::default(),
             };
             let block = Block::bordered()
                 .title("Installed Packages")

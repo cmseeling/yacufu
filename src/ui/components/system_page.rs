@@ -9,13 +9,12 @@ use ratatui::{
 };
 use tracing::info;
 
-use crate::ui::{action::Action, Mode, Page};
+use crate::ui::{action::Action, Mode, Page, ViewState};
 
 use super::Component;
 
 #[derive(Default)]
 pub struct SystemPage {
-    show: bool,
     focused: bool,
 }
 
@@ -23,41 +22,16 @@ impl SystemPage {
     pub fn new() -> Self {
         Self {
             // The system page is selected by default
-            show: true,
             focused: false,
         }
     }
 }
 
 impl Component for SystemPage {
-    fn update(&mut self, action: Action) -> Result<Option<Action>> {
+    fn update(&mut self, action: Action, view_state: ViewState) -> Result<Option<Action>> {
         match action {
-            Action::ChangePage(page) => {
-                match page {
-                    Page::System => self.show = true,
-                    _ => self.show = false,
-                };
-                self.focused = false;
-            }
-            Action::FocusPage => {
-                if self.show {
-                    self.focused = true
-                } else {
-                    self.focused = false
-                }
-            }
-            Action::ChangeMode(mode) => match mode {
-                Mode::System => {
-                    if self.show {
-                        self.focused = true
-                    } else {
-                        self.focused = false
-                    }
-                }
-                _ => self.focused = false,
-            },
             Action::ListAction(list_action) => {
-                if self.show && self.focused {
+                if view_state.mode == Mode::System {
                     info!("SystemPage handling action: {list_action:?}");
                     match list_action {
                         // ListAction::SelectNext => self.state.select_next(),
@@ -75,8 +49,13 @@ impl Component for SystemPage {
         Ok(None)
     }
 
-    fn draw(&mut self, frame: &mut Frame, areas: &HashMap<&str, Rect>) -> Result<()> {
-        if self.show {
+    fn draw(
+        &mut self,
+        view_state: ViewState,
+        frame: &mut Frame,
+        areas: &HashMap<&str, Rect>,
+    ) -> Result<()> {
+        if view_state.page == Page::System {
             let area = areas.get("page").unwrap();
             let border_style = match self.focused {
                 true => Style::default().fg(Color::Blue),

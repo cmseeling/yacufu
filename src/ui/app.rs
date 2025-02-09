@@ -19,7 +19,7 @@ use crate::{
     ui::tui::{Event, Tui},
 };
 
-use super::{Mode, Page};
+use super::{Mode, Page, ViewState};
 
 pub struct App {
     config: Config,
@@ -28,8 +28,7 @@ pub struct App {
     components: Vec<Box<dyn Component>>,
     should_quit: bool,
     should_suspend: bool,
-    mode: Mode,
-    page: Page,
+    view_state: ViewState,
     last_tick_key_events: Vec<KeyEvent>,
     action_tx: mpsc::UnboundedSender<Action>,
     action_rx: mpsc::UnboundedReceiver<Action>,
@@ -50,8 +49,10 @@ impl App {
             should_quit: false,
             should_suspend: false,
             config: Config::new()?,
-            mode: Mode::MainMenu,
-            page: Page::System,
+            view_state: ViewState {
+                mode: Mode::MainMenu,
+                page: Page::System,
+            },
             last_tick_key_events: Vec::new(),
             action_tx,
             action_rx,
@@ -117,21 +118,22 @@ impl App {
 
     fn handle_key_event(&mut self, key: KeyEvent) -> Result<()> {
         let action_tx = self.action_tx.clone();
-        info!("Getting keymap for {:?}", self.mode);
+        info!("Getting keymap for {:?}", self.view_state.mode);
         let keymap = {
             let Some(universal_keybinds) = self.config.keybindings.get(&Mode::Universal) else {
                 return Ok(());
             };
-            let list_keymap =
-                if self.mode.to_string().ends_with("List") || self.mode == Mode::MainMenu {
-                    match self.config.keybindings.get(&Mode::List) {
-                        Some(l_map) => l_map,
-                        None => &HashMap::new(),
-                    }
-                } else {
-                    &HashMap::new()
-                };
-            let tabs_keymap = if self.mode.to_string().ends_with("Tabs") {
+            let list_keymap = if self.view_state.mode.to_string().ends_with("List")
+                || self.view_state.mode == Mode::MainMenu
+            {
+                match self.config.keybindings.get(&Mode::List) {
+                    Some(l_map) => l_map,
+                    None => &HashMap::new(),
+                }
+            } else {
+                &HashMap::new()
+            };
+            let tabs_keymap = if self.view_state.mode.to_string().ends_with("Tabs") {
                 match self.config.keybindings.get(&Mode::Tabs) {
                     Some(t_map) => t_map,
                     None => &HashMap::new(),
@@ -139,7 +141,7 @@ impl App {
             } else {
                 &HashMap::new()
             };
-            let mode_keymap = match self.config.keybindings.get(&self.mode) {
+            let mode_keymap = match self.config.keybindings.get(&self.view_state.mode) {
                 Some(m_map) => m_map,
                 None => &HashMap::new(),
             };
@@ -186,13 +188,17 @@ impl App {
                 Action::ClearScreen => tui.terminal.clear()?,
                 Action::Resize(w, h) => self.handle_resize(tui, w, h)?,
                 Action::Render => self.render(tui)?,
-                Action::ChangeMode(mode) => self.mode = mode,
-                Action::ChangePage(page) => self.page = page,
-                Action::FocusMainMenu => self.mode = Mode::MainMenu,
+                // Action::ChangeMode(mode) => self.mode = mode,
+                // Action::ChangePage(page) => self.page = page,
+                Action::FocusMainMenu => {
+                    // Setting the view_state this way to remain consistent with other calls
+                    self.view_state = ViewState::new(Mode::MainMenu, self.view_state.page)
+                }
+                Action::UpdateViewState(state) => self.view_state = state,
                 _ => {}
             }
             for component in self.components.iter_mut() {
-                if let Some(action) = component.update(action.clone())? {
+                if let Some(action) = component.update(action.clone(), self.view_state)? {
                     self.action_tx.send(action)?
                 };
             }
@@ -222,7 +228,7 @@ impl App {
             ]);
 
             for component in self.components.iter_mut() {
-                if let Err(err) = component.draw(frame, &layout_areas) {
+                if let Err(err) = component.draw(self.view_state, frame, &layout_areas) {
                     let _ = self
                         .action_tx
                         .send(Action::Error(format!("Failed to draw: {:?}", err)));

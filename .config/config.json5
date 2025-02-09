@@ -34,13 +34,13 @@
         "ListAction": "SelectPrev"
       },
       "<l>": {
-        "ListAction": "MarkSelection"
+        "ListAction": "MakeSelection"
       },
       "<right>": {
-        "ListAction": "MarkSelection"
+        "ListAction": "MakeSelection"
       },
       "<enter>": {
-        "ListAction": "MarkSelection"
+        "ListAction": "MakeSelection"
       }
     },
     "Tabs": {
@@ -59,30 +59,18 @@
     },
     // "System": {},
     "InstalledPackageTabs": {
-      "<enter>": {
-        "ChangeMode": "InstalledPackageList"
-      },
-      "<tab>": {
-        "ChangeMode": "InstalledPackageList"
-      },
+      "<enter>": "NextMode",
+      "<tab>": "NextMode",
     },
     "InstalledPackageList": {
-      "<tab>": {
-        "ChangeMode": "InstalledPackageTabs"
-      },
+      "<tab>": "PrevMode",
     },
     "PackageSourceTabs": {
-      "<enter>": {
-        "ChangeMode": "PackageSourceList"
-      },
-      "<tab>": {
-        "ChangeMode": "PackageSourceList"
-      },
+      "<enter>": "NextMode",
+      "<tab>": "NextMode",
     },
     "PackageSourceList": {
-      "<tab>": {
-        "ChangeMode": "PackageSourceTabs"
-      },
+      "<tab>": "PrevMode",
     },
   }
 }
